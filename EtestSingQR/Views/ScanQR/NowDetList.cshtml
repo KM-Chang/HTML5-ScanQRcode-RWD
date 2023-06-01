@@ -1,0 +1,124 @@
+﻿@addTagHelper *, EtestSingQR
+@{
+    ViewData["Title"] = "本場次未報到";
+}
+
+@section HeadCss
+{
+    <style>
+        .tab-pane {
+            max-height:55vh;
+            overflow-x:hidden;
+            padding:1px 1%;
+        }
+        .card
+        {
+            margin-top:5px;
+            border:1px outset #59A3C2;
+            background: linear-gradient(to bottom left,#f3fbfe,#ffffff);
+        }
+
+    </style>
+}
+@section Scripts
+{
+    <script>
+    $(window).ready(()=>
+    {
+        $("#ListStdiv").append();
+        const MyModal = JQWaitBar("查詢中...", "", true);
+        MyModal.show();
+        $.ajax({
+            type: "GET",
+            async: true,
+            dataType: "json",
+            headers: { "XSRF-TOKEN": $('input:hidden[name="__RequestVerificationToken"]').val(), "Authorization": localStorage.getItem("csfJWTToken") },
+            url: "../api/APIScan/GetDetListTime",
+            contentType: 'application/json;charset=UTF-8',
+            data:{sLotID:`@(ViewData["sLotID"])_`},
+            success: function (Retdate) {
+                $("#btnBack").attr("href",`../ScanQR?sTPID=${Retdate.sTPID}`);
+                if (Retdate.successYN == 1) {
+                    if (Retdate.jsondt.length==0)
+                    {
+                        $("#StuListtab").append(`<li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" aria-selected="true">全部試場&nbsp;&nbsp;<span class="badge bg-warning text-dark">${Retdate.jsondt.length}</span></button></li>`);
+                        $("#StuListContent").append(`<div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab"><div class='alert alert-success'><b>本場次已全部報到完成！</b></div></div>`);
+                    }else{
+                        let RoomFlag="";
+                        let RoomName="";
+                        let Roomtol=0;
+                        let $txtthisTab="";
+                        let $txtthisContent="";
+                        for (let r = 0; r < Retdate.jsondt.length; r++) 
+                        {
+                            if (RoomFlag !=Retdate.jsondt[r].TestRoomID)
+                            {
+                                if (Roomtol !=0) 
+                                {
+                                    $txtthisTab +=`<li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#PutabRoom${RoomFlag}" type="button" aria-selected="false">${RoomName}&nbsp;&nbsp;<span class="badge bg-warning text-dark">${Roomtol}</span></button></li>`;
+                                    $txtthisContent +="</div></div>";
+                                }
+                                RoomFlag=Retdate.jsondt[r].TestRoomID;
+                                RoomName=Retdate.jsondt[r].TestRoomName;
+                                Roomtol=0;
+                                $txtthisContent+=`<div class="tab-pane fade" id="PutabRoom${RoomFlag}"><div class="row">`;
+                            }
+                            $txtthisContent+=`<div class="col-sm-6"><div class="card">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">${Retdate.jsondt[r].CName}</h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted"><span class="badge bg-MybgColor">${Retdate.jsondt[r].SeatNo}</span>&nbsp;<span class="badge bg-secondary">${Retdate.jsondt[r].PermiNo}</span></h6>
+                                                    <p class="card-text"><hr />
+                                                        <strong>手機：</strong>&nbsp;<u>${Retdate.jsondt[r].Mobile}</u><br />
+                                                        <strong>電話：</strong>&nbsp;<u>${Retdate.jsondt[r].DayTel}</u><br />
+                                                    </p>
+                                                </div>
+                                            </div></div>`;
+                            Roomtol++;
+                        }
+                        $txtthisTab +=`<li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#PutabRoom${RoomFlag}" type="button" aria-selected="false">${RoomName}&nbsp;&nbsp;<span class="badge bg-warning text-dark">${Roomtol}</span></button></li>`;
+                        $txtthisContent+="</div></div>"
+                        $("#StuListtab").append($txtthisTab);
+                        $("#StuListContent").append($txtthisContent);
+                    }
+                    MyModal.hide();
+                }else if (Retdate.successYN == 2)  {
+                    location.href = "../Error/CIx001";  //驗證失敗無權限
+                }else{
+                    MyModal.hide();
+                    ErrMsg("發生錯誤！", Retdate.msg).show();
+                }
+            },
+            error: function (Retdate) {
+                MyModal.hide();
+                artMsg("發生錯誤！", Retdate.msg).show();
+            },
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest(); // 建立xhr(XMLHttpRequest)物件
+                xhr.upload.addEventListener("progress", function (progressEvent) { // 監聽ProgressEvent
+                    if (progressEvent.lengthComputable) {
+                        var percentComplete = progressEvent.loaded / progressEvent.total;
+                        var percentVal = Math.round(percentComplete * 100) + "%";
+                        $("#MyBarw").width(percentVal);
+                    }
+                }, false);
+                return xhr; // 注意必須將xhr(XMLHttpRequest)物件回傳
+            }
+        });
+    });
+    </script>
+}
+
+ <div class="container-md">
+        <div id="SelDiv" class="row">
+            <div class="col-md-8 offset-md-2">
+                <h4 class="display-6">本場次未報到名單<a id="btnBack" href="../ScanQR" class="btn btn-info btn-lg float-end"><b><i class="bi bi-reply-fill"></i><span class="Myhidd-md">&nbsp;返回</span></b></a></h4>
+            </div>
+            <div class="col-md-8 offset-md-2">
+                <hr />
+                <ul class="nav nav-pills mb-3" id="StuListtab" role="tablist">
+                </ul>
+                <div class="tab-content table-responsive" id="StuListContent">
+                </div>
+            </div>
+        </div>
+    </div>

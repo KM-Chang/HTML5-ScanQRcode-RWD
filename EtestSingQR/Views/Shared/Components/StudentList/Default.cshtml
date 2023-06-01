@@ -1,0 +1,19 @@
+﻿@model EtestSingQR.Models.StudentViewModel
+@{
+}
+
+@if (Model != null)
+{
+    <div class="col-sm-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@(Model.CName)</h5>
+                <h6 class="card-subtitle mb-2 text-muted"><span class="badge bg-MybgColor">@(Model.SeatNo)</span>&nbsp;<span class="badge bg-secondary">@(Model.PermiNo)</span></h6>
+                <p class="card-text"><hr />
+                    <strong>手機：</strong>&nbsp;<u>@(Model.Mobile)</u><br />
+                    <strong>電話：</strong>&nbsp;<u>@(Model.DayTel)</u><br />
+                </p>
+            </div>
+        </div>
+    </div>
+}

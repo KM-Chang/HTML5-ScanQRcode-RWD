@@ -1,0 +1,102 @@
+html {
+    font-size: 14px;
+    font-family: Segoe UI, Arial,微軟正黑體;
+}
+a:link {
+    text-decoration: none;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+        font-family: Segoe UI, Arial,微軟正黑體;
+    }
+
+}
+@media (max-width: 768px) {
+    .Myhidd-md {
+        display: none;
+    }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    background-color: #fafafa;
+}
+/*上方導覽列和背景*/
+.bg-MybgColor {
+    background-color: #339FA7;
+}
+
+.navbar-brandAnim {
+    font-size: 1.2em;
+    animation: RtoRnikaIcon 1.3s linear 1;
+}
+/*首頁格式*/
+#LoginFr {
+    padding: 10px 15px;
+    box-shadow: 1px 1px 3px #aaa;
+    border-left: 5px solid rgba(51, 159, 167, 0.4);
+    background-color: #ffffff;
+}
+
+#ImgCodejpg {
+    margin: 7px 0;
+    cursor: pointer;
+}
+
+#btnLoginIng {
+    display: none;
+}
+/*自製按鈕顏色*/
+.MybtnColor1 {
+    background-color: #339FA7;
+    border: 1px solid rgba(51, 159, 167, 0.4);
+    color: #fcfbf7;
+}
+
+    .MybtnColor1:hover {
+        background-color: #2e9097;
+        color: #fcf9f3;
+    }
+/*自製清單表格 改寫*/
+.table-MyGv {
+    width: 100%;
+    border: 0px solid #ddd;
+    font-size: 1.1em;
+    margin-top: 3px;
+}
+
+    .table-MyGv tr:first-child > th {
+        color: #FFFFFF;
+        vertical-align: top;
+        white-space: nowrap;
+        font-size: 1.15em;
+        border-left: 1px solid #ddd;
+        border-right: 1px solid #ddd;
+        background-color: #339FA7;
+    }
+
+    .table-MyGv tr:last-child > td {
+        border-bottom: 1px solid #59A3C2;
+    }
+
+    .table-MyGv tr:first-child > th:first-child, .table-MyGv tr > td:first-child {
+        text-align: center;
+    }
+
+    .table-MyGv td {
+        border-left: 0px solid #ddd;
+        border-right: 0px solid #ddd;
+        padding: 10px 3px;
+        vertical-align:middle;
+    }
+
+    .table-MyGv tr:hover {
+        background: #cad6de;
+    }

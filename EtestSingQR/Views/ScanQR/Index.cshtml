@@ -1,0 +1,370 @@
+﻿@model ScanHomeViewModel
+@{
+    ViewData["Title"] = "報到";
+}
+@section HeadCss
+{
+    <style>
+        #SingInFrom1 {
+            padding:7px;
+            border: 5px solid #8aafde; 
+            border-radius: 8px;
+            font-size:1.2em;
+            margin-bottom:8px;
+        }
+        #SingInFrom1 >div> a,#divMsgShowSing>div>a 
+        {
+            font-weight: bold;
+            color: #ffffff; 
+            margin:7px 3px;
+        }
+        .bi-caret-right-fill
+        {
+            color:#8aafde;
+        }
+        #ScanQRrunDiv
+        {
+            display:none;
+            padding:5px 8px;
+            max-width:85vh;
+        }
+        #KeyPIDrunDiv
+        {
+            display:none;
+            padding-top:2%;
+            padding:5px 8px
+        }
+        #btnOpenCam{
+            display:none;
+            margin-bottom:10px;
+        }
+        #imgStuSing{
+            max-width:40vw;
+            max-height:45vh;
+        }
+        #ChSgingCont{
+            padding: 2px 5%;
+            font-size:1.2em;
+            font-weight:bold;
+        }
+        #ChSgingCont input[type="checkbox"]{
+            width:1.25em;
+            height:1.25em;
+        }
+        #ChSgingCont>label:nth-child(1)
+        {
+            background-color:#8aafde;
+        }
+        #labSstatic
+        {
+            font-size:1.05em;
+            font-weight:600;
+        }
+    </style>
+}
+
+@section Scripts
+{
+    <script src="~/lib/qrcode-ctrl/html5-qrcode.min.js"></script>
+    <script src="~/lib/qrcode-ctrl/scanctrl.js"></script>
+    <script>
+        function SwitchbtnGo(RunType)
+        {
+            //開啟報到視窗
+            if ($("#SetDetYN").length != 0)
+            {
+                switch (RunType)
+                {
+                    case "1":
+                        $("#KeyPIDrunDiv").hide();
+                        $("#ScanQRrunDiv").show();
+                        if (SendNoFlag==0) 
+                        {
+                            $("#CapMsg").show();
+                            let ScanBox=$("#ScanQRrunDiv").width()*0.6;
+                            QrCamStart("CamVideo",ScanBox,ScanBox,5);
+                        }else{
+                            ctlSingSopt = false;
+                        }
+                        break;
+                    case "2":
+                        $("#ScanQRrunDiv").hide();
+                        $("#KeyPIDrunDiv").show();
+                        $("#txtKeyPID").focus();
+                        //QrCamStop();
+                        //location.reload();
+                        break;
+                    default:
+                        break;
+                }
+            }else{
+                artMsg("沒有場次", "今日已經沒有可報到的場次囉！").show();
+            }
+        }
+        function InpuSingNum(InpuSingTxt,SorType)
+        {
+            //查詢報到資料
+            if ($("#divMsgShowSing").is(":hidden")) {      //開啟資料框時不能刷其他應檢人 隱藏才能
+                InpuSingTxt = InpuSingTxt ?? "";
+                InpuSingTxt=htmlEncode(InpuSingTxt.replace(/[^A-Za-z0-9-/# ]/g, "").replace("000026#", "#"));
+                $("#txtKeyPID").val("");
+                if (InpuSingTxt.length == 32 || InpuSingTxt.length == 33 || (InpuSingTxt.length == 10))
+                {
+                    ctlSingSopt=true;   //暫停解析QRCODE
+
+                    $.ajax({
+                        type: "GET",
+                        async: false,
+                        dataType: "json",
+                        headers: { "XSRF-TOKEN": $('input:hidden[name="__RequestVerificationToken"]').val(), "Authorization": localStorage.getItem("csfJWTToken") },
+                        url: "@Url.Content("~/api/APIScan/GetStuDate")",
+                        contentType: 'application/json;charset=UTF-8',
+                        data:{ sLotID: MyUrlEecode($("#HiddmoTestLotID").val()) ,sKeyPID: InpuSingTxt},
+                        success: function (Retdate) 
+                        {
+                            if (Retdate.successYN == 1 || Retdate.successYN == 3) {
+                                $("#labSstatic").html(Retdate.jsondt[0].FirstSignTime);
+                                $("#labSname").text(Retdate.jsondt[0].CName);
+                                $("#labEname").text(Retdate.jsondt[0].EName);
+                                $("#labPID").text(Retdate.jsondt[0].PID);
+                                $("#labBriDay").text("民國 " + (Retdate.jsondt[0].Birthday.substring(0, 4) - 1911) + " 年 " + Retdate.jsondt[0].Birthday.substring(5, 7) +" 月 "+ Retdate.jsondt[0].Birthday.substring(8, 10)+" 日");
+                                $("#labPerNo").text(Retdate.jsondt[0].PermiNo);
+                                $("#labLv").text(Retdate.jsondt[0].JobLevel);
+                                $("#labRofID").text(Retdate.jsondt[0].JobKindCSF);
+                                $("#labRofIDS").text(Retdate.jsondt[0].JobKindSkill);
+                                $("#labTestType").text(Retdate.jsondt[0].TestType);
+                                $("#HiddPerNo").val(Retdate.jsondt[0].PermiNo);
+                                if (Retdate.successYN==3)
+                                {
+                                    //已報到 調出之前勾選的錯誤欄位
+                                    $("#HiddErrItem").val(Retdate.jsondt[0].SignErrTypeMsg);
+                                    $("#HiddErrNote").val(Retdate.jsondt[0].SignErrNote);
+                                    $("#labSstaticDoul").html(Retdate.msg);
+                                    $("#labSstaticDoul").show();
+                                }else{
+                                    $("#HiddErrItem").val("");
+                                    $("#HiddErrNote").val("");
+                                    $("#labSstaticDoul").hide();
+                                }
+                                $("#divMsgShowSing").modal("show");
+                            }else if (Retdate.successYN == 2)  {
+                                location.href = "../Error/CIx001";  //驗證失敗無權限
+                            }else{
+                                playAudioFun("audioNo");
+                                KTsimalret('danger',Retdate.msg);
+                                setTimeout(()=>ctlSingSopt=false,2200); //2.2秒重啟
+                            }
+                        },
+                        error: function (Retdate) 
+                        {
+                            KTsimalret('danger',"查詢失敗，請重新整理再試一次！");
+                        }
+                    });
+
+
+                }else{
+                    playAudioFun("audioNo");
+                    KTsimalret('danger',(SorType=="QR") ? "QRcode錯誤，請掃描准考證右上角QRcode！": "號碼格式輸入錯誤！");
+                    setTimeout(()=>ctlSingSopt=false,2200); //2.2秒重啟
+                }
+
+            } else {
+                //資料框開啟中暫停解析
+                ctlSingSopt=true;   //暫停解析QRCODE
+                $("#txtKeyPID").val("");
+            }
+        }
+        function ChkSingNum(BtnSingType)
+        {
+            if (BtnSingType === 0 || BtnSingType === 1)
+            {
+                //確認報到
+                if (BtnSingType === 0 || $("#HiddErrItem").val() != "") {
+                    $.ajax({
+                        type: "PUT",
+                        async: false,
+                        dataType: "json",
+                        headers: { "XSRF-TOKEN": $('input:hidden[name="__RequestVerificationToken"]').val(), "Authorization": localStorage.getItem("csfJWTToken") },
+                        url: "@Url.Content("~/api/APIScan/EditSingDt")",
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({ FmErrItem: MyUrlEecode($("#HiddErrItem").val()),FmErrNote: MyUrlEecode($("#HiddErrNote").val()), FmSelKry: MyUrlEecode($("#HiddPerNo").val()),FmSingType:BtnSingType}),
+                        success: function (Retdate) {
+                            if (Retdate.successYN == 1) {
+                                playAudioFun("audioOk");
+                                KTsimalret("success","報到完成！");
+                            }else if (Retdate.successYN == 2)  {
+                                location.href = "../Error/CIx001";  //驗證失敗無權限
+                            }else{
+                                playAudioFun("audioNo");
+                                KTsimalret("danger",Retdate.msg);
+                            }
+                            setTimeout(()=>ctlSingSopt=false,1200); //1秒重啟
+                            $("#divMsgShowSing").modal("hide");
+                        },
+                        error: function (Retdate) {
+                            KTsimalret("danger",Retdate.msg);
+                            ctlSingSopt=false;   //重啟解析QRCODE
+                            $("#divMsgShowSing").modal("hide");
+                        }
+                    });
+                }else{
+                    KTsimalret("danger","請選勾選錯誤的欄位！");
+                }
+            }
+            else {
+                playAudioFun("audioNo");
+                KTsimalret('danger',"狀態錯誤，報到失敗！");
+                ctlSingSopt=false;   //重啟解析QRCODE
+                $("#divMsgShowSing").modal("hide");
+            }
+        }
+        $(window).ready(function() {
+            history.pushState(null, document.title, location.href);    //新增但不觸發一個歷史紀錄(網址)
+            window.addEventListener('popstate', e=>{ location.href=location.href; });      //監聽返回上一頁事件 再重載進來
+            if ($("#SetDetYN").length == 0) $("#btnRePage").hide();
+            $("#txtKeyPID").keyup(e =>{
+                console.log(e.target.value);
+                if (e.keyCode == 13)
+                {
+                    InpuSingNum(e.target.value,"PID");
+                }
+            });
+            $("#btnKeyPID").click(()=>InpuSingNum($("#txtKeyPID").val(),"PID"));
+            $(window).keydown(e =>{if ($("#KeyPIDrunDiv").is(":visible") && $("#divMsgShowSing").is(":hidden")) $("#txtKeyPID").focus();});
+            //報到資料框按鈕
+            $("#btnCancel").click(()=> {
+                ctlSingSopt=false;   //重啟解析QRCODE
+                $("#divMsgShowSing").modal("hide");
+            });
+            $("#btnSingGo").click(()=>{
+                ChkSingNum(0);
+            });
+            $("#btnChSing").click(()=>{
+                let ErrItemarr=$("#HiddErrItem").val().split(',');
+                let ChkItemarr=["","","","",""];
+                ChkItemarr[0]=(ErrItemarr.indexOf("姓名錯誤") > -1) ?"checked":"";
+                ChkItemarr[1]=(ErrItemarr.indexOf("英文姓名錯誤") > -1) ?"checked":"";
+                ChkItemarr[2]=(ErrItemarr.indexOf("身分證號錯誤") > -1) ?"checked":"";
+                ChkItemarr[3]=(ErrItemarr.indexOf("生日錯誤") > -1) ?"checked":"";
+                ChkItemarr[4]=(ErrItemarr.indexOf("職類錯誤") > -1) ?"checked":"";
+                ChkItemarr[5]=(ErrItemarr.indexOf("級別錯誤") > -1) ?"checked":"";
+                let ErrNoteStr=$("#HiddErrNote").val();
+                JQShowmodal("",""
+                ,`<div id='ChSgingCont' class='list-group'>
+                      <label class='list-group-item text-white'><b><i class='bi bi-tags'></i>&nbsp;&nbsp;請選擇資料有誤的欄位</b></label>
+                      <label class='list-group-item'><input type='checkbox' class='form-check-input me-1' value='姓名錯誤' ${ChkItemarr[0]} />&nbsp;&nbsp;姓名錯誤</label>
+                      <label class='list-group-item'><input type='checkbox' class='form-check-input me-1' value='英文姓名錯誤' ${ChkItemarr[0]} />&nbsp;&nbsp;英文姓名錯誤</label>
+                      <label class='list-group-item'><input type='checkbox' class='form-check-input me-1' value='身分證號錯誤' ${ChkItemarr[1]} />&nbsp;&nbsp;身分證號錯誤</label>
+                      <label class='list-group-item'><input type='checkbox' class='form-check-input me-1' value='生日錯誤' ${ChkItemarr[2]} />&nbsp;&nbsp;生日錯誤</label>
+                      <label class='list-group-item'><input type='checkbox' class='form-check-input me-1' value='職類錯誤' ${ChkItemarr[3]} />&nbsp;&nbsp;職類錯誤</label>
+                      <label class='list-group-item'><input type='checkbox' class='form-check-input me-1' value='級別錯誤' ${ChkItemarr[4]} />&nbsp;&nbsp;級別錯誤</label>
+                      <div class='list-group-item'><textarea id="txtErrNote" rows="3" class="form-control" placeholder="備註(50字內)">${ErrNoteStr}</textarea></div>
+                  </div>
+                `
+                ,"<b>確定</b>,<b>返回</b>","warning,secondary","Y").on(e=>{
+                    if (e==0)
+                    {
+                        let SignETMsg = "";
+                        $("#ChSgingCont input:checked").each(function (r) {
+                            SignETMsg += "," + $(this).val();
+                        });
+                        $("#HiddErrItem").val(SignETMsg.substr(1));
+                        $("#HiddErrNote").val($("#txtErrNote").val());
+                        ChkSingNum(1);
+                        $("#MyJQmodal").modal('hide'); 
+                    }else{
+                        $("#MyJQmodal").modal('hide'); 
+                    }
+                });
+            });
+        });
+    </script>
+}
+ <div class="container-md">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div id="SingInFrom1">
+                <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>日期：</b></label>@(Model.SingToday)&nbsp;&nbsp;@if (Model.TestLotID !="") @Html.Raw("<span class='badge bg-MybgColor'> " + Model.TestLotID + " </span> ")<br />
+                <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>場次：</b></label>@(Model.SetTestID)
+                &nbsp;&nbsp;<a id="btnRePage" asp-area="" asp-controller="ScanQR" asp-action="Index" asp-route-sTPID="@(Model.TestPlaceID)" class="btn btn-warning btn-sm opacity-75"><b><i class="bi bi-arrow-repeat"></i><span class="Myhidd-md">&nbsp;刷新</span></b></a><br />
+                @if (Model.SingStime != "")
+                {
+                    @Html.Raw($"&nbsp;&nbsp;&nbsp;&nbsp;<span id='SetDetYN' class='badge rounded-pill bg-secondary'>─&nbsp;可報到時間：{Model.SingStime}&nbsp; ～&nbsp;{Model.SingEtime}</span><br />")
+                }
+                <hr />
+                <div class="text-center">
+                    <a href="javascript:SwitchbtnGo('1');" class="btn btn-success btn-lg"><i class="bi bi-qr-code-scan"></i>&nbsp;掃描准考證</a>
+                    <a href="javascript:SwitchbtnGo('2');" class="btn btn-primary btn-lg opacity-75"><i class="bi bi-pencil-square"></i>&nbsp;輸入身分證</a>
+                </div>
+            </div>
+            <div id="ScanQRrunDiv">
+                <a id="btnOpenCam" asp-controller="ScanQR" asp-action="Index" asp-route-sTPID="@(Model.TestPlaceID)" class="btn btn-danger">關閉鏡頭</a>
+                <span id="CapMsg"><i class="spinner-grow text-success"></i><span class='h3'>&nbsp;鏡頭開啟中...</span></span>
+                <div id="CamVideo"></div>
+            </div>
+            <div id="KeyPIDrunDiv">
+                <div class="input-group">
+                    <div class="input-group-text">輸入或掃描</div>
+                    <input id="txtKeyPID" type="text" class="form-control" placeholder="請輸入或掃描准考證號或身分字號" aria-label="InputKeyPID" aria-describedby="btnKeyPID" maxlength="33">
+                    <button class="btn btn-primary" type="button" id="btnKeyPID">確定</button>
+                </div>
+            </div>
+            <input id="HiddmoTPID" type="hidden" value="@(Model.TestPlaceID)" />
+            <input id="HiddmoToday" type="hidden" value="@(Model.SingToday)" />
+            <input id="HiddmoTestLotID" type="hidden" value="@(Model.TestLotID)" />
+            <input id="HiddmoSetTestID" type="hidden" value="@(Model.SetTestID)" />
+            <audio id="audioOk" src="~/lib/qrcode-ctrl/OkBee.wav"></audio>
+            <audio id="audioNo" src="~/lib/qrcode-ctrl/NoBee.wav"></audio>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="divMsgShowSing" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-keyboard="false">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header bg-MybgColor text-white">
+        <h5 class="modal-title"><strong>報到資料</strong></h5>
+      </div>
+      <div class="modal-body modal-dialog-scrollable">
+            <div class="row ">
+                <div class="col-lg-9 col-md-8 col-sm-7 ">
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>報到時間：</b></label>&nbsp;&nbsp;
+                        <label class="col-form-label text-primary" id="labSstatic"></label>&nbsp;&nbsp<span id="labSstaticDoul" class="badge bg-success"></span>
+                        <hr />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>報到姓名：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labSname"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>英文姓名：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labEname"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>身分證號：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labPID"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>出生日期：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labBriDay"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>准考證號：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labPerNo"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>測試級別：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labLv"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>測試職類：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labRofID"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>測試職類：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labRofIDS"></label><br />
+                        <label class="col-form-label"><i class="bi bi-caret-right-fill"></i>&nbsp;<b>測試類別：</b></label>&nbsp;
+                        <label class="col-form-label text-dark" id="labTestType"></label><br />
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-5">
+                    <img id="imgStuSing" src="data:image/jpeg;base64,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" />
+                </div>
+            </div>
+            <input id="HiddPerNo" type="hidden" value="" />
+            <input id="HiddErrItem" type="hidden" value="" />
+            <input id="HiddErrNote" type="hidden" value="" />
+      </div>
+      <div class="modal-footer">
+        <div class="mx-auto">
+            <a id="btnSingGo" class="btn btn-primary btn-lg position-relative"><span class="position-absolute top-100 start-50 translate-middle badge rounded-pill bg-MybgColor">下一位</span><b>資料正確</b></a>&nbsp;
+            <a id="btnChSing" class="btn btn-warning  btn-lg"><b>資料有誤</b></a>&nbsp;
+            <a id="btnCancel" class="btn btn-secondary btn-lg"><b>取消</b></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

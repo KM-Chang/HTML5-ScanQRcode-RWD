@@ -1,0 +1,122 @@
+﻿/*滑鼠移過去圖示轉一圈*/
+.btn-close:hover, .Myrotate:hover {
+    transition: transform 0.7s;
+    transform: rotate(180deg);
+}
+/*X跟Y軸翻轉一圈*/
+.MyrotateX {
+    animation: MyrotateX 0.7s linear 1;
+}
+
+.MyrotateY {
+    animation: MyrotateY 0.7s linear 1;
+}
+
+@keyframes MyrotateX {
+    from {
+        transform: rotateX(0deg);
+    }
+
+    to {
+        transform: rotateX(720deg);
+    }
+}
+
+@keyframes MyrotateY {
+    from {
+        transform: rotateY(0deg);
+    }
+
+    to {
+        transform: rotateY(720deg);
+    }
+}
+/*淡出出現並旋轉*/
+@keyframes RtoRnikaIcon {
+    0% {
+        opacity: .0;
+        transform: rotateX(0deg);
+    }
+
+    80% {
+        transform: rotateX(480deg);
+        opacity: .7;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+/*滑鼠放置的動畫*/
+@keyframes RiRiMouseHover {
+    0% {
+        box-shadow: 1px 1px 3px #F2B441;
+        border: 0px solid #F2B441;
+        border-bottom: 2px solid #F2B441;
+    }
+
+    50% {
+        border-right: 2px solid #F2B441;
+    }
+
+    100% {
+        box-shadow: 1px 1px 3px #F2B441;
+        border: 5px solid #F2B441;
+    }
+}
+/*瞬間閃爍*/
+@keyframes blink1 {
+    0% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    81% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+/*漸層閃爍*/
+@keyframes blink2 {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+/*變形球*/
+.BallAim {
+    margin: 0 47% 50px;
+    width: 50px;
+    height: 50px;
+    background-color: #fa4949;
+    animation: moveball 5s infinite;
+    transform-origin: left bottom;
+    border-radius: 50% 50% 50% 0%;
+}
+
+@keyframes moveball {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        background-color: #f6dd15;
+    }
+
+    75% {
+        background-color: #1266c1;
+    }
+
+    100% {
+        transform: rotate(720deg);
+    }
+}

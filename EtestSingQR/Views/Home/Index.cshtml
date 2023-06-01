@@ -1,0 +1,105 @@
+﻿@{
+    ViewData["Title"] = "登入";
+}
+@model IEnumerable<EtestSingQR.Services.LoginUserDate>
+
+@section HeadCss
+{
+}
+
+@section Scripts
+{
+    <script>
+        function CheckTbox() 
+        {
+            $("#btnLoginIng").show();
+            let errCount = 0;
+            $('[required="required"]').each(function(r) {
+                if ($(this).val().trim() == "") { $(this).addClass("is-invalid"); errCount = 1; } else {
+                    $(this).removeClass("is-invalid");
+                }
+            });
+            if (errCount ==0 && $("#ImgCode").val().length !=4 ) {$("#ImgCode").addClass("is-invalid"); errCount = 1; artMsg("驗證碼錯誤", "驗證碼格式錯誤！").show();}
+            if (errCount ==0 && $("#DListLodID").val().length !=4 && $("#DListLodID").val().length !=3 && $("#DListLodID").val().length !=8) {$("#DListLodID").addClass("is-invalid"); errCount = 1; artMsg("單位代碼錯誤", "請輸入技檢系統單位代碼或即測即評單位代碼！").show();}
+            if (errCount == 0) {
+                return true;
+            } else {
+                $("#LabMsg").html("<strong>請正確填寫以下欄位！</strong>");
+                $("#btnLogin").show();
+                $("#btnLoginIng").hide();
+                return false;
+            }
+        }
+        $(window).ready(function() {
+            if (top.frames.length != 0) { top.location = encodeURI(self.location); }
+            localStorage.removeItem('csfJWTToken');
+            if ($("#LabMsg").text() == "") { $("#LabMsg").hide(); } else { $("#LabMsg").fadeIn(); }
+            if (sessionStorage.getItem("StoagtLodID")) {
+              //還原先前的暫存的輸入資料
+              $("#DListLodID").val(sessionStorage.getItem("StoagtLodID"));
+            }
+            $("#btnLogin").click(()=> 
+                {
+                    $(this).addClass("disabled"); 
+                    if (CheckTbox()) { 
+                        sessionStorage.setItem("StoagtLodID", $("#DListLodID").val());
+                        return true; 
+                    } else {
+                        $(this).removeClass("disabled"); return false; 
+                    }; 
+                }
+            );
+            var tooltip = new bootstrap.Tooltip($('[data-bs-toggle="tooltip"]'), {html:false});  //啟用tooltip
+            $("#DListLodID").keyup(() =>{
+                let Thisobj=$("#DListLodID");
+                if (Thisobj.val().length >=1) {
+                    Thisobj.attr("list","datalistOptions");
+                }
+                else{
+                    Thisobj.attr("list","");
+                }
+            });
+        });
+    </script>
+}
+ <div class="container-md">
+        <div class="row">
+            <figure class="col-md-6 offset-md-3">
+                <blockquote class="blockquote">
+                    <p><h2 class="display-4">選擇考場</h2></p>
+                </blockquote>
+                <figcaption class="blockquote-footer">
+                    請輸入您的考場
+                </figcaption>
+                <hr />
+                <div id="LabMsg" class="alert alert-danger" role="alert">@Html.Raw(ViewData["LabAlertMsg"])</div>
+            </figure>
+        </div>
+        <div class="row">
+            <div id="LoginFr" class="col-md-6 offset-md-3">
+                <form method="post">
+                    <div>
+                    <label for="DListLodID" class="form-label"><b>考場代號</b></label>
+                        <input class="form-control" list="" id="DListLodID" name="DListLodID" placeholder="請輸入3碼代號" required="required">
+                        <datalist id="datalistOptions">
+                        @if (Model != null)
+                        {
+                            foreach (var MyItem in Model)
+                            {
+                                <option value="@($"{MyItem.LaborID}-{MyItem.TestPlaceID}")">@MyItem.TestPlaceInit</option>
+                            }
+                        }
+                    </datalist>
+                    </div>
+                    <div>
+                        <label for="ImgCode" class="form-label"><b>驗證碼</b></label>
+                        <input type="text" class="form-control" id="ImgCode" name="ImgCode" placeholder="請輸入下方圖片數字" required="required"  autocomplete="off">
+                        @await Component.InvokeAsync("ImgVerif")
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="btnLogin" type="submit" class="btn btn-lg MybtnColor1">登  入<span id="btnLoginIng">  中．．．<i class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></i></span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+</div>

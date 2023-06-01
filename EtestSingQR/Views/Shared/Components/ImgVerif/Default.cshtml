@@ -1,0 +1,18 @@
+﻿@model EtestSingQR.Services.ImgVerifDate
+@{
+    TempData["BE_CheckCode"] = Model.CheckCode;
+}
+<style>
+    #ImgCodejpg{border:2px solid rgba(51, 159, 167, 0.4);}
+    .btn-secondary {font-size:1.12em}
+</style>
+
+
+<img id="ImgCodejpg" src="@Model.ImgBase64" data-bs-toggle="tooltip" data-bs-placement="bottom" title="看不清楚？點圖換一個"/>&nbsp;&nbsp;
+<a id="ReImgCode" href="#" class="btn btn-secondary"><b><i class="bi bi-arrow-repeat"></i></b></a>
+
+
+<script>
+    $("#ImgCodejpg").click(()=> $("#ImgCodejpg").attr("src","@Url.Content("~/api/APIHome/GetValidateCode")?" + Math.random()))
+    $("#ReImgCode").click(()=> $("#ImgCodejpg").attr("src","@Url.Content("~/api/APIHome/GetValidateCode")?" + Math.random()))
+</script>

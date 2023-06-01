@@ -1,0 +1,137 @@
+﻿@{
+    ViewData["Title"] = "本日場次";
+}
+
+@section HeadCss
+{
+    <style>
+        #detTable tr >td,#detTable tr >th {
+            text-align:center;
+            font-weight:bold;
+        }
+        @@media only screen and (max-width:650px) {
+            #detTable tr:nth-child(1) {
+                display:none;
+            }
+            #detTable tr {
+                display: block;
+                border: 1px solid #59A3C2;
+                margin: 15px 0;
+            }
+            #detTable tr>td:nth-child(1) {
+                display: block;
+                color: #FFFFFF;
+                vertical-align: top;
+                white-space: nowrap;
+                font-size: 1.15em;
+                background-color: #339FA7;
+                padding:5px;
+            }
+            #detTable tr>td:nth-child(1)::before {
+                content: attr(date-RWD)" ─  ";
+                color: #FFFFFF;
+                vertical-align: top;
+                white-space: nowrap;
+                font-size: 1.05em;
+            }
+            #detTable tr>td:nth-child(n+2) {
+                display: inline-block;
+                text-align:left;
+                border-bottom: 0px;
+                padding: 10px 1rem 7px 1rem;
+                font-size: 1.15em;
+            }
+            #detTable tr>td:nth-child(n+2)::before {
+                color: #339FA7;
+                content: "   "attr(date-RWD)"： ";
+                font-weight: bold;
+            }
+            #detTable tr>td:nth-child(4) {
+                display: block;
+                text-align:right;
+                border-bottom: 0px;
+                padding: 10px 1rem 7px 1rem;
+                font-size: 1.3em;
+            }
+        }
+    </style>
+}
+
+@section Scripts
+{
+    <script>
+    $(window).ready(()=>
+    {
+        const MyModal = JQWaitBar("查詢今日場次中...", "", true);
+        MyModal.show();
+        $.ajax({
+            type: "GET",
+            async: true,
+            dataType: "json",
+            headers: { "XSRF-TOKEN": $('input:hidden[name="__RequestVerificationToken"]').val(), "Authorization": localStorage.getItem("csfJWTToken") },
+            url: "../api/APIScan/GetDetListDay",
+            contentType: 'application/json;charset=UTF-8',
+            data:{sLotID:`@(ViewData["sLotID"])_`},
+            success: function (Retdate) {
+                $("#btnBack").attr("href",`../ScanQR?sTPID=${Retdate.sTPID}`);
+                if (Retdate.successYN == 1) {
+                    if (Retdate.jsondt.length==0)
+                    {
+                        $("#labTole").text("今天開考0個場次 ");
+                        $("#detTable").append("<tr><td colspan='4'><div class='alert alert-warning'><b>今日無開考場次喔！</b></div></td></tr>");
+                    }else{
+                        let $txtthis;
+                        $("#labTole").text(`今天開考${Retdate.jsondt.length}個場次 `);
+                        for (let r = 0; r < Retdate.jsondt.length; r++) {
+                            $txtthis += `"<tr><td date-RWD="場次">${Retdate.jsondt[r].SetTestID}</td><td date-RWD="已報到">${Retdate.jsondt[r].SingCut}</td><td date-RWD="未報到">${Retdate.jsondt[r].NotSingCut}</td><td date-RWD="總數">${Retdate.jsondt[r].PopCut}</td></tr>"`;
+                        }
+                        $("#detTable").append($txtthis);
+                    }
+                    MyModal.hide();
+                }else if (Retdate.successYN == 2)  {
+                    location.href = "../Error/CIx001";  //驗證失敗無權限
+                }else{
+                    $("#labTole").text("查詢發生錯誤！請聯絡基金會人員排除");
+                    MyModal.hide();
+                    ErrMsg("發生錯誤！", Retdate.msg).show();
+                }
+            },
+            error: function (Retdate) {
+                $("#labTole").text("今天開考0個場次 ");
+                MyModal.hide();
+                artMsg("發生錯誤！", Retdate.msg).show();
+            },
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest(); // 建立xhr(XMLHttpRequest)物件
+                xhr.upload.addEventListener("progress", function (progressEvent) { // 監聽ProgressEvent
+                    if (progressEvent.lengthComputable) {
+                        var percentComplete = progressEvent.loaded / progressEvent.total;
+                        var percentVal = Math.round(percentComplete * 100) + "%";
+                        $("#MyBarw").width(percentVal);
+                    }
+                }, false);
+                return xhr; // 注意必須將xhr(XMLHttpRequest)物件回傳
+            }
+        });
+    });
+    </script>
+}
+
+  <div class="container-md">
+        <div id="LoadDiv" class="row">
+        </div>
+        <div id="SelDiv" class="row">
+            <div class="col-md-8 offset-md-2">
+                <h4 class="display-6">本日場次<a id="btnBack" href="../ScanQR" class="btn btn-info btn-lg float-end"><b><i class="bi bi-reply-fill"></i><span class="Myhidd-md">&nbsp;返回</span></b></a></h4>
+            </div>
+            <div class="col-md-8 offset-md-2">
+                <hr />
+                <label id="labTole"></label>
+                <div class="table-responsive">
+                    <table id="detTable" class="table table-MyGv">
+                        <tr><th>場次</th><th>已報到</th><th>未報到</th><th>報名總數</th></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>

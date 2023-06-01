@@ -1,0 +1,48 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>學科報到系統 - 發生了點問題</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/MyTaiation.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/EtestSingQR.styles.css" asp-append-version="true" />
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-dark bg-MybgColor navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand navbar-brandAnim" asp-area="" asp-controller="Home" asp-action="Index"><i class="bi bi-check2-square"></i> <b>學科報到系統</b></a>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <br /><br />
+        <h1 class="text-danger"><b>抱歉，發生未預期錯誤！</b></h1>
+        <br />
+        <div class="alert alert-danger">
+        <h2><i class="bi bi-emoji-dizzy"></i>&nbsp;@Model.ErrMsg</h2>
+        </div>
+        <p>
+            <strong>Request ID:</strong> <code>@Model.RequestId</code><br /><br />
+            <strong>Error Number:</strong>　@Model.ErrType
+        </p>
+        <div class="d-grid gap-2 col-4">
+            @(Html.Raw(Model.butUrl))
+        </div>
+    </div>
+</body>
+</html>
+
