@@ -8,5 +8,9 @@
 
 ## 測試資料
 
-* 上午場次─Input ID：A234567890   Scan QRcode：![A234567890](asa.jpg)
-* 下午場次─Input ID：A123456789   Scan QRcode：![A123456789](gogo.jpg)
+* 上午場次─Input ID：A234567890   
+            Scan QRcode：
+            ![A234567890](asa.jpg)
+* 下午場次─Input ID：A123456789   
+            Scan QRcode：
+            ![A123456789](gogo.jpg)
